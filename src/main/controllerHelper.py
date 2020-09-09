@@ -10,3 +10,6 @@ def is_url_incorrect(url):
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(regex, url) is None
+
+def is_length_incorrect(title, content, sender):
+    return len(title) > 30 and len(content) > 30 and len(sender) > 30

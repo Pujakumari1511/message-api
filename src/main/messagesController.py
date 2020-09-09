@@ -22,6 +22,9 @@ def create_message():
         content = request.json['content']
         sender = request.json['sender']
         url = request.json['url']
+        if helper.is_length_incorrect(title, content, sender):
+            return "Error: all fields length should be smaller than 30"
+
         if helper.is_url_incorrect(url):
             return "Error: url is invalid", 400
         message = Message(title, content, sender, url)
@@ -33,25 +36,22 @@ def create_message():
 
 @app.route('/api/read/messages', methods=['GET'])
 def read_all_messages():
-    if 'version' in request.args and 'format' in request.args:
-        version = request.args['version']
-        if version == "1":
-            result = list(map(Message.get_message_in_dict_for_v1, messages))
-        elif version == "2":
+    if 'version' in request.args and request.args['version'] == "1":
+        return dumps(list(map(Message.get_message_in_dict_for_v1, messages)))
+    elif 'version' in request.args and request.args['version'] == "2":
+        if 'format' in request.args:
             result = list(map(Message.get_message_in_dict_for_v2, messages))
+            data_format = request.args['format']
+            if data_format == 'json':
+                return dumps(result)
+            elif data_format == 'xml':
+                return dicttoxml(result, custom_root='messages', attr_type=False)
+            else:
+                return "Error: Invalid format, provide either json or xml", 400
         else:
-            return "Error: Invalid version, provide either 1 or 2", 400
-
-        data_format = request.args['format']
-        if data_format == 'json':
-            return dumps(result)
-        elif data_format == 'xml':
-            return dicttoxml(result, custom_root='messages', attr_type=False)
-        else:
-            return "Error: Invalid format, provide either json or xml", 400
-
+            return "Error: please provide format parameter", 400
     else:
-        return "Error: No URL or format params provided. Please specify url and format in params", 400
+        return "Error: Invalid version, valid version are 1 and 2", 400
 
 
 if __name__ == "__main__":
